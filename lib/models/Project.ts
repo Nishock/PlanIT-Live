@@ -1,4 +1,4 @@
-import mongoose, { type Document, Schema } from "mongoose"
+import mongoose, { Schema, Document, models, model } from "mongoose"
 
 export interface IProject extends Document {
   name: string
@@ -59,12 +59,8 @@ const ProjectSchema = new Schema<IProject>(
       max: 100,
       default: 0,
     },
-    startDate: {
-      type: Date,
-    },
-    endDate: {
-      type: Date,
-    },
+    startDate: Date,
+    endDate: Date,
     budget: {
       type: Number,
       min: 0,
@@ -85,9 +81,10 @@ const ProjectSchema = new Schema<IProject>(
   },
 )
 
-// Indexes
 ProjectSchema.index({ workspace: 1 })
 ProjectSchema.index({ owner: 1 })
 ProjectSchema.index({ members: 1 })
 
-export default mongoose.models.Project || mongoose.model<IProject>("Project", ProjectSchema)
+// ✅ Proper global registration
+const Project = models.Project || model<IProject>("Project", ProjectSchema)
+export default Project
