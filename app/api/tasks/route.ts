@@ -18,8 +18,33 @@ export const GET = requireAuth(async (request: NextRequest, authUser) => {
 
     const query: any = { createdBy: authUser.userId }
 
-    if (workspaceId && mongoose.Types.ObjectId.isValid(workspaceId)) {
-      query.workspace = workspaceId
+    let effectiveWorkspaceId = workspaceId
+    if (!workspaceId || !mongoose.Types.ObjectId.isValid(workspaceId)) {
+      // Find or create the user's Personal workspace
+      let personalWorkspace = await Workspace.findOne({
+        name: "Personal",
+        owner: authUser.userId,
+      })
+      if (!personalWorkspace) {
+        personalWorkspace = new Workspace({
+          name: "Personal",
+          description: "Default personal workspace",
+          type: "personal",
+          owner: authUser.userId,
+          members: [
+            {
+              user: authUser.userId,
+              role: "admin",
+              joinedAt: new Date(),
+            },
+          ],
+        })
+        await personalWorkspace.save()
+      }
+      effectiveWorkspaceId = personalWorkspace._id.toString()
+    }
+    if (effectiveWorkspaceId && mongoose.Types.ObjectId.isValid(effectiveWorkspaceId)) {
+      query.workspace = effectiveWorkspaceId
     }
     if (projectId && mongoose.Types.ObjectId.isValid(projectId)) {
       query.project = projectId
