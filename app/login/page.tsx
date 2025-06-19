@@ -88,26 +88,6 @@ export default function CyberpunkLoginPage() {
     }
   }
 
-  const handleDemoLogin = async () => {
-    setIsLoading(true)
-    try {
-      await login("demo@planit.app", "demo1234")
-      toast({
-        title: "Demo PlanIT Link Active!",
-        description: "Exploring PlanIT with demo PlanIT patterns.",
-      })
-      router.push("/dashboard")
-    } catch (error) {
-      toast({
-        title: "Demo Connection Failed",
-        description: "Please try again or contact PlanIT support.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   useEffect(() => {
     // Create floating particles
     const particles = document.querySelectorAll(".particle")
@@ -285,25 +265,6 @@ export default function CyberpunkLoginPage() {
                     />
                   ))}
                   <div className="absolute inset-0 bg-gradient-to-r from-cyan-600/0 via-cyan-600/30 to-cyan-600/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                </button>
-
-                {/* Demo Login Button */}
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-white/10" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-black px-2 text-gray-400">Or</span>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleDemoLogin}
-                  disabled={isLoading}
-                  className="w-full py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white font-medium rounded-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? "Connecting..." : "Try Demo PlanIT Link"}
                 </button>
               </form>
             </div>
