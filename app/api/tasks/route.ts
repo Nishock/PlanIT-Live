@@ -5,6 +5,7 @@ import User from "@/lib/models/User"
 import Workspace from "@/lib/models/Workspace"
 import { requireAuth } from "@/lib/middleware/auth"
 import mongoose from "mongoose"
+import Project from "@/lib/models/Project"
 
 export const GET = requireAuth(async (request: NextRequest, authUser) => {
   try {

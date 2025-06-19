@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import connectDB from "@/lib/database"
 import Document from "@/lib/models/Document"
 import Workspace from "@/lib/models/Workspace"
+import Project from "@/lib/models/Project"
 import { requireAuth } from "@/lib/middleware/auth"
 
 export const GET = requireAuth(async (request: NextRequest, authUser) => {
