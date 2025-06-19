@@ -117,9 +117,14 @@ export default function TeamPage() {
     location: "",
     role: "",
   })
+  const [pendingInvites, setPendingInvites] = useState<any[]>([])
+  const [loadingInvites, setLoadingInvites] = useState(false)
+
+  const workspaceId = members[0]?.workspaces?.[0] || ""
 
   useEffect(() => {
     fetchTeamMembers()
+    fetchPendingInvites()
   }, [])
 
   const fetchTeamMembers = async () => {
@@ -144,6 +149,24 @@ export default function TeamPage() {
       })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchPendingInvites = async () => {
+    if (!workspaceId) return
+    setLoadingInvites(true)
+    try {
+      const token = localStorage.getItem("auth_token")
+      const res = await fetch(`/api/team/invite?workspaceId=${workspaceId}`, {
+        headers: { "Authorization": `Bearer ${token}` },
+        credentials: "include",
+      })
+      const data = await res.json()
+      setPendingInvites(data.invites || [])
+    } catch (error) {
+      setPendingInvites([])
+    } finally {
+      setLoadingInvites(false)
     }
   }
 
@@ -381,6 +404,29 @@ export default function TeamPage() {
   }
 
   const stats = getTeamStats()
+
+  const handleRevokeInvite = async (inviteId: string) => {
+    const token = localStorage.getItem("auth_token")
+    await fetch(`/api/team/invite?inviteId=${inviteId}`, {
+      method: "DELETE",
+      headers: { "Authorization": `Bearer ${token}` },
+      credentials: "include",
+    })
+    toast({ title: "Invite revoked" })
+    fetchPendingInvites()
+  }
+
+  const handleResendInvite = async (inviteId: string) => {
+    const token = localStorage.getItem("auth_token")
+    await fetch(`/api/team/invite/resend`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      credentials: "include",
+      body: JSON.stringify({ inviteId }),
+    })
+    toast({ title: "Invite resent" })
+    fetchPendingInvites()
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -859,6 +905,30 @@ export default function TeamPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Pending Invites Section */}
+      {loadingInvites ? (
+        <div className="my-6 text-center text-muted-foreground">Loading pending invites...</div>
+      ) : pendingInvites.length > 0 ? (
+        <div className="my-6">
+          <h2 className="text-lg font-semibold mb-2">Pending Invites</h2>
+          <div className="space-y-2">
+            {pendingInvites.map((invite) => (
+              <div key={invite._id} className="flex items-center gap-4 bg-muted/50 rounded-lg px-4 py-2">
+                <span className="font-medium">{invite.email}</span>
+                <Badge>{invite.role}</Badge>
+                <span className="text-xs text-muted-foreground">{invite.status}</span>
+                <Button size="sm" variant="outline" onClick={() => handleResendInvite(invite._id)}>
+                  Resend
+                </Button>
+                <Button size="sm" variant="destructive" onClick={() => handleRevokeInvite(invite._id)}>
+                  Revoke
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

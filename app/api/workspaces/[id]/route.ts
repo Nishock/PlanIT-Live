@@ -13,12 +13,18 @@ function workspaceToClient(workspace, projects = [], events = []) {
   return obj;
 }
 
-export const GET = requireAuth(async (request) => {
+export const GET = requireAuth(async (request, authUser) => {
   try {
     await connectDB()
     const id = request.nextUrl.pathname.split("/").filter(Boolean).pop()
     if (!id) return NextResponse.json({ error: "Workspace ID required" }, { status: 400 })
-    const workspace = await Workspace.findById(id)
+    const workspace = await Workspace.findOne({
+      _id: id,
+      $or: [
+        { owner: authUser.userId },
+        { "members.user": authUser.userId }
+      ]
+    })
       .populate("owner", "name email avatar")
       .populate("members.user", "name email avatar")
     if (!workspace) {
@@ -33,13 +39,23 @@ export const GET = requireAuth(async (request) => {
   }
 })
 
-export const PUT = requireAuth(async (request) => {
+export const PUT = requireAuth(async (request, authUser) => {
   try {
     await connectDB()
     const id = request.nextUrl.pathname.split("/").filter(Boolean).pop()
     if (!id) return NextResponse.json({ error: "Workspace ID required" }, { status: 400 })
     const updateData = await request.json()
-    const updatedWorkspace = await Workspace.findByIdAndUpdate(id, updateData, { new: true })
+    const updatedWorkspace = await Workspace.findOneAndUpdate(
+      {
+        _id: id,
+        $or: [
+          { owner: authUser.userId },
+          { "members.user": authUser.userId }
+        ]
+      },
+      updateData,
+      { new: true }
+    )
       .populate("owner", "name email avatar")
       .populate("members.user", "name email avatar")
     if (!updatedWorkspace) {
@@ -52,12 +68,18 @@ export const PUT = requireAuth(async (request) => {
   }
 })
 
-export const DELETE = requireAuth(async (request) => {
+export const DELETE = requireAuth(async (request, authUser) => {
   try {
     await connectDB()
     const id = request.nextUrl.pathname.split("/").filter(Boolean).pop()
     if (!id) return NextResponse.json({ error: "Workspace ID required" }, { status: 400 })
-    const deleted = await Workspace.findByIdAndDelete(id)
+    const deleted = await Workspace.findOneAndDelete({
+      _id: id,
+      $or: [
+        { owner: authUser.userId },
+        { "members.user": authUser.userId }
+      ]
+    })
     if (!deleted) {
       return NextResponse.json({ error: "Workspace not found" }, { status: 404 })
     }

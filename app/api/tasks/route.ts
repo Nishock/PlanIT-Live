@@ -62,7 +62,14 @@ export const GET = requireAuth(async (request: NextRequest, authUser) => {
       .populate("workspace", "name")
       .sort({ createdAt: -1 })
 
-    return NextResponse.json(tasks)
+    // Map _id to id for frontend compatibility
+    const tasksWithId = tasks.map((task) => {
+      const obj = task.toObject ? task.toObject() : task
+      obj.id = obj._id?.toString()
+      return obj
+    })
+
+    return NextResponse.json(tasksWithId)
   } catch (error) {
     console.error("Get tasks error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -108,9 +115,11 @@ export const POST = requireAuth(async (request: NextRequest, authUser) => {
       workspaceId = defaultWorkspace._id
     }
 
-    // Find assignee by email if provided (optional)
+    // Determine assignee
     let assigneeId = null
-    if (taskData.assigneeEmail && taskData.assigneeEmail.trim()) {
+    if (taskData.assignee && mongoose.Types.ObjectId.isValid(taskData.assignee)) {
+      assigneeId = taskData.assignee
+    } else if (taskData.assigneeEmail && taskData.assigneeEmail.trim()) {
       const assignee = await User.findOne({ email: taskData.assigneeEmail.trim() })
       if (assignee) {
         assigneeId = assignee._id

@@ -261,6 +261,7 @@ export default function AboutPage() {
               { name: "Integrations", href: "/integrations" },
               { name: "About", href: "/about" },
               { name: "Blog", href: "/blog" },
+              { name: "Contact", href: "/contact" },
             ].map((item, index) => (
               <Link
                 key={item.name}
@@ -317,6 +318,7 @@ export default function AboutPage() {
                 { name: "Integrations", href: "/integrations" },
                 { name: "About", href: "/about" },
                 { name: "Blog", href: "/blog" },
+                { name: "Contact", href: "/contact" },
               ].map((item, index) => (
                 <Link
                   key={item.name}
@@ -679,11 +681,6 @@ export default function AboutPage() {
                     Blog
                   </Link>
                 </li>
-                <li>
-                  <Link href="/careers" className="hover:text-purple-400 transition-colors">
-                    Careers
-                  </Link>
-                </li>
               </ul>
             </div>
             <div className="space-y-4 animate-in slide-in-from-bottom duration-1000 delay-300">
@@ -697,11 +694,6 @@ export default function AboutPage() {
                 <li>
                   <Link href="/contact" className="hover:text-purple-400 transition-colors">
                     Contact
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/status" className="hover:text-purple-400 transition-colors">
-                    Status
                   </Link>
                 </li>
               </ul>

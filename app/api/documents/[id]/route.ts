@@ -14,7 +14,7 @@ export const GET = requireAuth(async (request: NextRequest, authUser) => {
       return NextResponse.json({ error: "Document ID is required" }, { status: 400 })
     }
 
-    const document = await Document.findById(documentId)
+    const document = await Document.findOne({ _id: documentId, owner: authUser.userId })
       .populate("owner", "name email avatar")
       .populate("project", "name")
 
@@ -68,8 +68,8 @@ export const PUT = requireAuth(async (request: NextRequest, authUser) => {
       delete updateData.starred
     }
 
-    const updatedDocument = await Document.findByIdAndUpdate(
-      documentId,
+    const updatedDocument = await Document.findOneAndUpdate(
+      { _id: documentId, owner: authUser.userId },
       { ...updateData, lastEditedBy: authUser.userId, lastEditedAt: new Date() },
       { new: true }
     )
@@ -118,7 +118,7 @@ export const DELETE = requireAuth(async (request: NextRequest, authUser) => {
       return NextResponse.json({ error: "Document ID is required" }, { status: 400 })
     }
 
-    const deletedDocument = await Document.findByIdAndDelete(documentId)
+    const deletedDocument = await Document.findOneAndDelete({ _id: documentId, owner: authUser.userId })
 
     if (!deletedDocument) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 })

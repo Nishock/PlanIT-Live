@@ -45,6 +45,9 @@ export default function ContactPage() {
     subject: "",
     message: "",
   })
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number>()
 
@@ -148,10 +151,29 @@ export default function ContactPage() {
     })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle form submission here
-    console.log("Form submitted:", formData)
+    setLoading(true)
+    setSuccess(null)
+    setError(null)
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSuccess("Your message has been sent! We'll get back to you soon.")
+        setFormData({ name: "", email: "", company: "", subject: "", message: "" })
+      } else {
+        setError(data.error || "Something went wrong. Please try again later.")
+      }
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Please try again later.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   const contactMethods = [
@@ -250,6 +272,7 @@ export default function ContactPage() {
               { name: "Integrations", href: "/integrations" },
               { name: "About", href: "/about" },
               { name: "Blog", href: "/blog" },
+              { name: "Contact", href: "/contact" },
             ].map((item, index) => (
               <Link
                 key={item.name}
@@ -304,6 +327,7 @@ export default function ContactPage() {
                 { name: "Integrations", href: "/integrations" },
                 { name: "About", href: "/about" },
                 { name: "Blog", href: "/blog" },
+                { name: "Contact", href: "/contact" },
               ].map((item, index) => (
                 <Link
                   key={item.name}
@@ -509,14 +533,23 @@ export default function ContactPage() {
                       placeholder="Tell us more about your inquiry..."
                     />
                   </div>
+                  {success && <div className="text-green-400 font-medium mb-2">{success}</div>}
+                  {error && <div className="text-red-400 font-medium mb-2">{error}</div>}
                   <Button
                     type="submit"
                     size="lg"
                     className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white border-0 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-500 hover:-translate-y-1 group"
+                    disabled={loading}
                   >
-                    <Send className="mr-2 h-5 w-5 group-hover:animate-bounce" />
-                    Send Message
-                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    {loading ? (
+                      <span>Sending...</span>
+                    ) : (
+                      <>
+                        <Send className="mr-2 h-5 w-5 group-hover:animate-bounce" />
+                        Send Message
+                        <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
                   </Button>
                 </form>
               </CardContent>
@@ -631,11 +664,6 @@ export default function ContactPage() {
                     Blog
                   </Link>
                 </li>
-                <li>
-                  <Link href="/careers" className="hover:text-purple-400 transition-colors">
-                    Careers
-                  </Link>
-                </li>
               </ul>
             </div>
             <div className="space-y-4 animate-in slide-in-from-bottom duration-1000 delay-300">
@@ -649,11 +677,6 @@ export default function ContactPage() {
                 <li>
                   <Link href="/contact" className="hover:text-purple-400 transition-colors">
                     Contact
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/status" className="hover:text-purple-400 transition-colors">
-                    Status
                   </Link>
                 </li>
               </ul>

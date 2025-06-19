@@ -16,12 +16,12 @@ function projectToClient(project: any) {
   return obj
 }
 
-export const GET = requireAuth(async (request) => {
+export const GET = requireAuth(async (request, authUser) => {
   try {
     await connectDB()
     const id = getProjectIdFromRequest(request)
     if (!id) return NextResponse.json({ error: "Project ID required" }, { status: 400 })
-    const project = await Project.findById(id)
+    const project = await Project.findOne({ _id: id, owner: authUser.userId })
       .populate("owner", "name email avatar")
       .populate("members", "name email avatar")
       .populate("workspace", "name")
@@ -35,13 +35,17 @@ export const GET = requireAuth(async (request) => {
   }
 })
 
-export const PUT = requireAuth(async (request) => {
+export const PUT = requireAuth(async (request, authUser) => {
   try {
     await connectDB()
     const id = getProjectIdFromRequest(request)
     if (!id) return NextResponse.json({ error: "Project ID required" }, { status: 400 })
     const updateData = await request.json()
-    const updatedProject = await Project.findByIdAndUpdate(id, updateData, { new: true })
+    const updatedProject = await Project.findOneAndUpdate(
+      { _id: id, owner: authUser.userId },
+      updateData,
+      { new: true }
+    )
       .populate("owner", "name email avatar")
       .populate("members", "name email avatar")
       .populate("workspace", "name")
@@ -55,12 +59,12 @@ export const PUT = requireAuth(async (request) => {
   }
 })
 
-export const DELETE = requireAuth(async (request) => {
+export const DELETE = requireAuth(async (request, authUser) => {
   try {
     await connectDB()
     const id = getProjectIdFromRequest(request)
     if (!id) return NextResponse.json({ error: "Project ID required" }, { status: 400 })
-    const deleted = await Project.findByIdAndDelete(id)
+    const deleted = await Project.findOneAndDelete({ _id: id, owner: authUser.userId })
     if (!deleted) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
     }
