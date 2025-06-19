@@ -13,11 +13,11 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
-import { Search, Bell, Settings, LogOut, User } from "lucide-react"
+import { Search, Bell, Settings, LogOut, User, Menu } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useState } from "react"
 
-export function DashboardHeader() {
+export function DashboardHeader({ onMenuClick }: { onMenuClick?: () => void }) {
   const { user, logout } = useAuth()
   const router = useRouter()
 
@@ -49,6 +49,14 @@ export function DashboardHeader() {
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-15 items-center px-6">
+        {/* Menu button for mobile/tab */}
+        <button
+          className="mr-4 md:hidden flex items-center justify-center p-2 rounded hover:bg-accent focus:outline-none"
+          onClick={onMenuClick}
+          aria-label="Open sidebar menu"
+        >
+          <Menu className="h-6 w-6" />
+        </button>
         <div
           className="flex flex-1 items-center space-x-4"
           style={{

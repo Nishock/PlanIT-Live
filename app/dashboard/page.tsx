@@ -211,7 +211,7 @@ export default function DashboardPage() {
           </h1>
           <p className="text-muted-foreground">Welcome back, {user?.name || "User"}! Here's your workspace overview.</p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center mb-3">
           {currentWorkspace && (
             <>
               <CreateDocumentDialog workspaceId={currentWorkspace.id} onDocumentCreated={handleDocumentCreated}>

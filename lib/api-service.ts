@@ -32,7 +32,7 @@ export interface Project {
   id: string
   name: string
   description: string
-  status: "active" | "completed" | "archived"
+  status: "planning" | "active" | "on-hold" | "completed" | "archived"
   progress: number
   members: User[]
   owner: User

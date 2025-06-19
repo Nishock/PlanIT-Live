@@ -111,7 +111,7 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className="hidden md:fixed md:inset-y-0 md:left-0 md:z-30 md:flex md:w-64 md:flex-col">
+      <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col flex-1 min-h-0 bg-background border-r">
           <div className="flex items-center h-16 px-4 border-b shrink-0">
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
@@ -177,12 +177,21 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
         </div>
       </div>
 
-      {/* Mobile Sidebar */}
+      {/* Mobile/Tablet Sidebar Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Mobile/Tablet Sidebar (full screen on phone, left panel on tab) */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-background border-r transform transition-transform duration-200 ease-in-out md:hidden",
+          "fixed inset-y-0 left-0 z-50 w-64 bg-background border-r transform transition-transform duration-200 ease-in-out lg:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
+        style={{ maxWidth: '100vw', width: '100%', height: '100vh' }}
       >
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between h-16 px-4 border-b">

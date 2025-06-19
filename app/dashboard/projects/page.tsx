@@ -459,7 +459,14 @@ export default function EnhancedProjectsPage() {
     if (!editingProject) return
     setIsEditing(true)
     try {
-      const updated = await projectsService.updateProject(editingProject.id, editProjectData)
+      // Ensure status is of correct type
+      const updated = await projectsService.updateProject(
+        editingProject.id,
+        {
+          ...editProjectData,
+          status: editProjectData.status as Project["status"],
+        }
+      )
       setProjects(projects.map((p) => (p.id === editingProject.id ? updated : p)))
       setEditDialogOpen(false)
       toast({ title: "Project updated", description: "Project details updated successfully" })
@@ -704,33 +711,38 @@ export default function EnhancedProjectsPage() {
       </Card>
 
       {/* Status Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6 h-12">
-          <TabsTrigger value="all" className="gap-2">
-            All ({projects.length})
-          </TabsTrigger>
-          <TabsTrigger value="planning" className="gap-2">
-            <Clock className="h-4 w-4" />
-            Planning ({projects.filter((p) => p.status === "planning").length})
-          </TabsTrigger>
-          <TabsTrigger value="active" className="gap-2">
-            <Play className="h-4 w-4" />
-            Active ({projects.filter((p) => p.status === "active").length})
-          </TabsTrigger>
-          <TabsTrigger value="on-hold" className="gap-2">
-            <Pause className="h-4 w-4" />
-            On Hold ({projects.filter((p) => p.status === "on-hold").length})
-          </TabsTrigger>
-          <TabsTrigger value="completed" className="gap-2">
-            <CheckCircle2 className="h-4 w-4" />
-            Completed ({projects.filter((p) => p.status === "completed").length})
-          </TabsTrigger>
-          <TabsTrigger value="archived" className="gap-2">
-            <Archive className="h-4 w-4" />
-            Archived ({projects.filter((p) => p.status === "archived").length})
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full min-w-[400px]">
+          <TabsList
+            className="w-full min-w-[600px] grid grid-cols-6 h-12 md:grid-cols-6 md:w-full md:min-w-0 md:overflow-visible
+              sm:flex sm:gap-2 sm:grid-cols-none sm:min-w-[500px] sm:w-max sm:overflow-x-auto sm:whitespace-nowrap"
+          >
+            <TabsTrigger value="all" className="gap-2 flex-shrink-0">
+              All ({projects.length})
+            </TabsTrigger>
+            <TabsTrigger value="planning" className="gap-2 flex-shrink-0">
+              <Clock className="h-4 w-4" />
+              Planning ({projects.filter((p) => p.status === "planning").length})
+            </TabsTrigger>
+            <TabsTrigger value="active" className="gap-2 flex-shrink-0">
+              <Play className="h-4 w-4" />
+              Active ({projects.filter((p) => p.status === "active").length})
+            </TabsTrigger>
+            <TabsTrigger value="on-hold" className="gap-2 flex-shrink-0">
+              <Pause className="h-4 w-4" />
+              On Hold ({projects.filter((p) => p.status === "on-hold").length})
+            </TabsTrigger>
+            <TabsTrigger value="completed" className="gap-2 flex-shrink-0">
+              <CheckCircle2 className="h-4 w-4" />
+              Completed ({projects.filter((p) => p.status === "completed").length})
+            </TabsTrigger>
+            <TabsTrigger value="archived" className="gap-2 flex-shrink-0">
+              <Archive className="h-4 w-4" />
+              Archived ({projects.filter((p) => p.status === "archived").length})
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
 
       {/* Edit Project Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
