@@ -70,6 +70,7 @@ const userSchema = new mongoose.Schema<IUser>(
     password: {
       type: String,
       required: true,
+      select: false, // ✅ required to make .select('+password') work
     },
     avatar: {
       type: String,
@@ -234,6 +235,18 @@ userSchema.methods.comparePassword = async function(candidatePassword: string): 
     return false
   }
 }
+
+// Add password hashing before saving
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (err) {
+    next(err as mongoose.CallbackError);
+  }
+});
 
 // Create indexes
 userSchema.index({ isActive: 1 })

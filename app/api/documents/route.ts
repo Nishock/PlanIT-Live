@@ -17,11 +17,27 @@ export const GET = requireAuth(async (request: NextRequest, authUser) => {
     if (workspaceId) {
       query.workspace = workspaceId
     } else {
-      // Find the user's Personal workspace
-      const personalWorkspace = await Workspace.findOne({
+      // Find or create the user's Personal workspace
+      let personalWorkspace = await Workspace.findOne({
         name: "Personal",
         owner: authUser.userId,
       })
+      if (!personalWorkspace) {
+        personalWorkspace = new Workspace({
+          name: "Personal",
+          description: "Default personal workspace",
+          type: "personal",
+          owner: authUser.userId,
+          members: [
+            {
+              user: authUser.userId,
+              role: "admin",
+              joinedAt: new Date(),
+            },
+          ],
+        })
+        await personalWorkspace.save()
+      }
       // Show documents that are either:
       // - Not associated with any workspace (legacy)
       // - Associated with the user's Personal workspace
@@ -29,7 +45,7 @@ export const GET = requireAuth(async (request: NextRequest, authUser) => {
         $or: [
           { owner: authUser.userId, workspace: { $exists: false } },
           { owner: authUser.userId, workspace: null },
-          personalWorkspace ? { owner: authUser.userId, workspace: personalWorkspace._id } : {},
+          { owner: authUser.userId, workspace: personalWorkspace._id },
         ],
       }
     }

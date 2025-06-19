@@ -7,47 +7,43 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB()
 
-    const { email, password } = await request.json()
+    const { email: rawEmail, password } = await request.json()
+    const email = rawEmail.trim().toLowerCase()
 
-    console.log("Login attempt for email:", email)
+    console.log("🔐 Login attempt for email:", email)
 
-    // Validate input
+    // Basic validation
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
     }
 
-    // Find user by email (include password for comparison)
-    const user = await User.findOne({ email: email.toLowerCase() }).select("+password")
+    // Find user with password explicitly selected
+    const user = await User.findOne({ email }).select("+password")
     if (!user) {
-      console.log("User not found:", email)
+      console.log("❌ User not found:", email)
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
     }
 
-    console.log("User found:", user.email)
-
-    // Check if user is active
+    // Check account status
     if (!user.isActive) {
       return NextResponse.json({ error: "Account is deactivated. Please contact support." }, { status: 401 })
     }
 
-    // Compare password using the user method
+    // Compare password securely
     const isPasswordValid = await user.comparePassword(password)
-
     if (!isPasswordValid) {
-      console.log("Password comparison failed for user:", email)
+      console.log("❌ Invalid password for:", email)
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
     }
 
-    console.log("Password comparison successful for user:", email)
-
-    // Update last login
+    // Update last login timestamp
     user.lastLogin = new Date()
     await user.save()
 
-    // Generate JWT token
+    // Generate JWT
     const token = generateToken(user)
 
-    // Return user data (without password)
+    // Prepare sanitized user response
     const userData = {
       id: user._id.toString(),
       name: user.name,
@@ -58,14 +54,12 @@ export async function POST(request: NextRequest) {
       lastLogin: user.lastLogin,
     }
 
-    console.log("Login successful for user:", email)
+    console.log("✅ Login successful:", email)
 
-    return NextResponse.json({
-      user: userData,
-      token,
-    })
+    return NextResponse.json({ user: userData, token }, { status: 200 })
+
   } catch (error) {
-    console.error("Login error:", error)
-    return NextResponse.json({ error: "Login failed. Please try again." }, { status: 500 })
+    console.error("🔥 Login error:", error)
+    return NextResponse.json({ error: "Login failed. Please try again later." }, { status: 500 })
   }
 }

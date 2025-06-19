@@ -49,6 +49,23 @@ async function connectDB() {
     throw e
   }
 
+  // Remove googleId index if it exists
+  try {
+    if (mongoose.connection.db) {
+      const indexes = await mongoose.connection.db.collection("users").indexes();
+      const googleIdIndex = indexes.find(idx => idx.key && idx.key.googleId === 1);
+      if (googleIdIndex && googleIdIndex.name) {
+        await mongoose.connection.db.collection("users").dropIndex(googleIdIndex.name as string);
+        console.log("Dropped duplicate googleId index from users collection.");
+      } else {
+        console.warn("Could not drop googleId index: mongoose.connection.db is undefined");
+      }
+    }
+  } catch (err: any) {
+    // Only log, don't crash app
+    console.warn("Could not drop googleId index (may not exist):", err.message);
+  }
+
   return cached.conn
 }
 
