@@ -3,6 +3,9 @@ import connectDB from "@/lib/database"
 import User from "@/lib/models/User"
 import { requireAuth } from "@/lib/middleware/auth"
 
+// 👇 This line is important to fix the Vercel deployment error
+export const dynamic = "force-dynamic";
+
 export const GET = requireAuth(async (request: NextRequest, authUser) => {
   try {
     await connectDB()

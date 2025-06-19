@@ -5,6 +5,9 @@ import connectDB from "@/lib/database"
 import Task from "@/lib/models/Task"
 import Project from "@/lib/models/Project"
 
+export const dynamic = "force-dynamic";
+
+
 export const POST = requireAuth(async (request: NextRequest, authUser) => {
   try {
     await connectDB()

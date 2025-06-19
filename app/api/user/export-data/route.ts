@@ -6,6 +6,8 @@ import Project from "@/lib/models/Project"
 import Document from "@/lib/models/Document"
 import { requireAuth } from "@/lib/middleware/auth"
 
+export const dynamic = "force-dynamic";
+
 export const GET = requireAuth(async (request: NextRequest, authUser) => {
   try {
     await connectDB()

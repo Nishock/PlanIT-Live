@@ -36,7 +36,6 @@ const InvitationSchema = new Schema<IInvitation>({
   token: {
     type: String,
     required: true,
-    unique: true,
   },
   status: {
     type: String,
@@ -54,6 +53,6 @@ const InvitationSchema = new Schema<IInvitation>({
 })
 
 InvitationSchema.index({ email: 1, workspace: 1 }, { unique: true })
-InvitationSchema.index({ token: 1 })
+InvitationSchema.index({ token: 1 }, { unique: true })
 
 export default mongoose.models.Invitation || mongoose.model<IInvitation>("Invitation", InvitationSchema) 
