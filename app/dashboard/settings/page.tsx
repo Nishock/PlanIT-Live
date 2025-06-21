@@ -11,7 +11,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -25,7 +24,6 @@ import {
 } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import {
-  User,
   Bell,
   Shield,
   Palette,
@@ -41,31 +39,17 @@ import {
   Settings,
   Save,
   Loader2,
-  Camera,
   AlertTriangle,
   CheckCircle,
   Moon,
   Sun,
   Monitor,
-  Languages,
   Clock,
-  MapPin,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
+import { useTheme } from "next-themes"
 
 interface UserSettings {
-  profile: {
-    firstName: string
-    lastName: string
-    email: string
-    bio: string
-    avatar: string
-    phone: string
-    location: string
-    website: string
-    timezone: string
-    language: string
-  }
   preferences: {
     theme: "light" | "dark" | "system"
     emailNotifications: boolean
@@ -98,27 +82,17 @@ interface UserSettings {
 export default function SettingsPage() {
   const { user } = useAuth()
   const { toast } = useToast()
+  const { theme, setTheme } = useTheme()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState("profile")
+  const [savingSettings, setSavingSettings] = useState<Set<string>>(new Set())
+  const [activeTab, setActiveTab] = useState("preferences")
   const [showPassword, setShowPassword] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState("")
 
   const [settings, setSettings] = useState<UserSettings>({
-    profile: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      bio: "",
-      avatar: "",
-      phone: "",
-      location: "",
-      website: "",
-      timezone: "UTC",
-      language: "en",
-    },
     preferences: {
       theme: "system",
       emailNotifications: true,
@@ -157,6 +131,16 @@ export default function SettingsPage() {
   useEffect(() => {
     fetchUserSettings()
   }, [])
+
+  // Sync theme with next-themes
+  useEffect(() => {
+    if (theme && settings.preferences.theme !== theme) {
+      setSettings(prev => ({
+        ...prev,
+        preferences: { ...prev.preferences, theme: theme as any }
+      }))
+    }
+  }, [theme])
 
   const fetchUserSettings = async () => {
     try {
@@ -214,6 +198,161 @@ export default function SettingsPage() {
       })
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handlePreferenceChange = async (key: string, value: any) => {
+    // Update local state immediately for responsive UI
+    setSettings(prev => ({
+      ...prev,
+      preferences: { ...prev.preferences, [key]: value }
+    }))
+
+    // Special handling for theme changes
+    if (key === "theme") {
+      setTheme(value)
+    }
+
+    // Show loading state for this setting
+    setSavingSettings(prev => new Set(prev).add(key))
+
+    // Auto-save the preference change
+    try {
+      const token = localStorage.getItem("auth_token")
+      const response = await fetch("/api/user/settings", {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          preferences: { ...settings.preferences, [key]: value }
+        }),
+      })
+
+      if (!response.ok) throw new Error("Failed to save preference")
+
+      const updatedSettings = await response.json()
+      setSettings(updatedSettings)
+
+      // Show a subtle success indicator
+      toast({
+        title: "Preference updated",
+        description: `${key.replace(/([A-Z])/g, ' $1').toLowerCase()} setting saved`,
+      })
+    } catch (error) {
+      console.error("Error saving preference:", error)
+      // Revert the local state change on error
+      setSettings(prev => ({
+        ...prev,
+        preferences: { ...prev.preferences, [key]: !value }
+      }))
+      // Revert theme change on error
+      if (key === "theme") {
+        setTheme(settings.preferences.theme)
+      }
+      toast({
+        title: "Error",
+        description: "Failed to save preference",
+        variant: "destructive",
+      })
+    } finally {
+      // Remove loading state
+      setSavingSettings(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(key)
+        return newSet
+      })
+    }
+  }
+
+  const handlePrivacyChange = async (key: string, value: any) => {
+    // Update local state immediately for responsive UI
+    setSettings(prev => ({
+      ...prev,
+      privacy: { ...prev.privacy, [key]: value }
+    }))
+
+    // Auto-save the privacy change
+    try {
+      const token = localStorage.getItem("auth_token")
+      const response = await fetch("/api/user/settings", {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          privacy: { ...settings.privacy, [key]: value }
+        }),
+      })
+
+      if (!response.ok) throw new Error("Failed to save privacy setting")
+
+      const updatedSettings = await response.json()
+      setSettings(updatedSettings)
+
+      toast({
+        title: "Privacy setting updated",
+        description: `${key.replace(/([A-Z])/g, ' $1').toLowerCase()} setting saved`,
+      })
+    } catch (error) {
+      console.error("Error saving privacy setting:", error)
+      // Revert the local state change on error
+      setSettings(prev => ({
+        ...prev,
+        privacy: { ...prev.privacy, [key]: !value }
+      }))
+      toast({
+        title: "Error",
+        description: "Failed to save privacy setting",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleSecurityChange = async (key: string, value: any) => {
+    // Update local state immediately for responsive UI
+    setSettings(prev => ({
+      ...prev,
+      security: { ...prev.security, [key]: value }
+    }))
+
+    // Auto-save the security change
+    try {
+      const token = localStorage.getItem("auth_token")
+      const response = await fetch("/api/user/settings", {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          security: { ...settings.security, [key]: value }
+        }),
+      })
+
+      if (!response.ok) throw new Error("Failed to save security setting")
+
+      const updatedSettings = await response.json()
+      setSettings(updatedSettings)
+
+      toast({
+        title: "Security setting updated",
+        description: `${key.replace(/([A-Z])/g, ' $1').toLowerCase()} setting saved`,
+      })
+    } catch (error) {
+      console.error("Error saving security setting:", error)
+      // Revert the local state change on error
+      setSettings(prev => ({
+        ...prev,
+        security: { ...prev.security, [key]: !value }
+      }))
+      toast({
+        title: "Error",
+        description: "Failed to save security setting",
+        variant: "destructive",
+      })
     }
   }
 
@@ -415,57 +554,6 @@ export default function SettingsPage() {
     }
   }
 
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Avatar must be less than 5MB",
-        variant: "destructive",
-      })
-      return
-    }
-
-    try {
-      const formData = new FormData()
-      formData.append("avatar", file)
-      const token = localStorage.getItem("auth_token")
-
-      const response = await fetch("/api/user/avatar", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        },
-        body: formData,
-      })
-
-      if (!response.ok) throw new Error("Failed to upload avatar")
-
-      const { avatarUrl } = await response.json()
-      setSettings({
-        ...settings,
-        profile: {
-          ...settings.profile,
-          avatar: avatarUrl,
-        },
-      })
-
-      toast({
-        title: "📸 Avatar updated",
-        description: "Your profile picture has been updated",
-      })
-    } catch (error) {
-      console.error("Error uploading avatar:", error)
-      toast({
-        title: "Error",
-        description: "Failed to upload avatar",
-        variant: "destructive",
-      })
-    }
-  }
-
   if (isLoading) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center">
@@ -499,11 +587,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="profile" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            Profile
-          </TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="preferences" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             Preferences
@@ -517,218 +601,6 @@ export default function SettingsPage() {
             Security
           </TabsTrigger>
         </TabsList>
-
-        {/* Profile Tab */}
-        <TabsContent value="profile" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Profile Information
-              </CardTitle>
-              <CardDescription>Update your personal information and profile details</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Avatar Section */}
-              <div className="flex items-center gap-6">
-                <div className="relative">
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage src={settings.profile.avatar || "/placeholder.svg"} alt="Profile" />
-                    <AvatarFallback className="text-lg">
-                      {settings.profile.firstName?.charAt(0) + settings.profile.lastName?.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <label className="absolute -bottom-2 -right-2 bg-purple-600 text-white p-2 rounded-full cursor-pointer hover:bg-purple-700 transition-colors">
-                    <Camera className="h-4 w-4" />
-                    <input type="file" accept="image/*" onChange={handleAvatarUpload} className="sr-only" />
-                  </label>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold">Profile Picture</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Click the camera icon to upload a new avatar. Max file size: 5MB
-                  </p>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Basic Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name *</Label>
-                  <Input
-                    id="firstName"
-                    value={settings.profile.firstName}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        profile: { ...settings.profile, firstName: e.target.value },
-                      })
-                    }
-                    placeholder="Enter your first name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name *</Label>
-                  <Input
-                    id="lastName"
-                    value={settings.profile.lastName}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        profile: { ...settings.profile, lastName: e.target.value },
-                      })
-                    }
-                    placeholder="Enter your last name"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={settings.profile.email}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      profile: { ...settings.profile, email: e.target.value },
-                    })
-                  }
-                  placeholder="Enter your email address"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                  id="bio"
-                  value={settings.profile.bio}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      profile: { ...settings.profile, bio: e.target.value },
-                    })
-                  }
-                  placeholder="Tell us about yourself..."
-                  rows={4}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    value={settings.profile.phone}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        profile: { ...settings.profile, phone: e.target.value },
-                      })
-                    }
-                    placeholder="+1 (555) 000-0000"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    value={settings.profile.website}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        profile: { ...settings.profile, website: e.target.value },
-                      })
-                    }
-                    placeholder="https://yourwebsite.com"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="location">
-                    <MapPin className="h-4 w-4 inline mr-1" />
-                    Location
-                  </Label>
-                  <Input
-                    id="location"
-                    value={settings.profile.location}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        profile: { ...settings.profile, location: e.target.value },
-                      })
-                    }
-                    placeholder="City, Country"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="timezone">
-                    <Clock className="h-4 w-4 inline mr-1" />
-                    Timezone
-                  </Label>
-                  <Select
-                    value={settings.profile.timezone}
-                    onValueChange={(value) =>
-                      setSettings({
-                        ...settings,
-                        profile: { ...settings.profile, timezone: value },
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select timezone" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="UTC">UTC</SelectItem>
-                      <SelectItem value="America/New_York">Eastern Time</SelectItem>
-                      <SelectItem value="America/Chicago">Central Time</SelectItem>
-                      <SelectItem value="America/Denver">Mountain Time</SelectItem>
-                      <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
-                      <SelectItem value="Europe/London">London</SelectItem>
-                      <SelectItem value="Europe/Paris">Paris</SelectItem>
-                      <SelectItem value="Asia/Tokyo">Tokyo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="language">
-                    <Languages className="h-4 w-4 inline mr-1" />
-                    Language
-                  </Label>
-                  <Select
-                    value={settings.profile.language}
-                    onValueChange={(value) =>
-                      setSettings({
-                        ...settings,
-                        profile: { ...settings.profile, language: value },
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="es">Español</SelectItem>
-                      <SelectItem value="fr">Français</SelectItem>
-                      <SelectItem value="de">Deutsch</SelectItem>
-                      <SelectItem value="it">Italiano</SelectItem>
-                      <SelectItem value="pt">Português</SelectItem>
-                      <SelectItem value="ja">日本語</SelectItem>
-                      <SelectItem value="ko">한국어</SelectItem>
-                      <SelectItem value="zh">中文</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         {/* Preferences Tab */}
         <TabsContent value="preferences" className="space-y-6">
@@ -757,16 +629,16 @@ export default function SettingsPage() {
                           : "border-border"
                       }`}
                       onClick={() =>
-                        setSettings({
-                          ...settings,
-                          preferences: { ...settings.preferences, theme: value as any },
-                        })
+                        handlePreferenceChange("theme", value as any)
                       }
                     >
                       <Icon className="h-6 w-6 mx-auto mb-2" />
                       <p className="text-center font-medium">{label}</p>
                       {settings.preferences.theme === value && (
                         <CheckCircle className="absolute top-2 right-2 h-5 w-5 text-purple-600" />
+                      )}
+                      {savingSettings.has("theme") && settings.preferences.theme === value && (
+                        <Loader2 className="absolute top-2 left-2 h-5 w-5 animate-spin text-purple-600" />
                       )}
                     </div>
                   ))}
@@ -788,13 +660,14 @@ export default function SettingsPage() {
                     <Switch
                       id="compactMode"
                       checked={settings.preferences.compactMode}
+                      disabled={savingSettings.has("compactMode")}
                       onCheckedChange={(checked) =>
-                        setSettings({
-                          ...settings,
-                          preferences: { ...settings.preferences, compactMode: checked },
-                        })
+                        handlePreferenceChange("compactMode", checked)
                       }
                     />
+                    {savingSettings.has("compactMode") && (
+                      <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                    )}
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
@@ -803,16 +676,19 @@ export default function SettingsPage() {
                       </Label>
                       <p className="text-sm text-muted-foreground">Play sounds for notifications and actions</p>
                     </div>
-                    <Switch
-                      id="soundEffects"
-                      checked={settings.preferences.soundEffects}
-                      onCheckedChange={(checked) =>
-                        setSettings({
-                          ...settings,
-                          preferences: { ...settings.preferences, soundEffects: checked },
-                        })
-                      }
-                    />
+                    <div className="flex items-center">
+                      <Switch
+                        id="soundEffects"
+                        checked={settings.preferences.soundEffects}
+                        disabled={savingSettings.has("soundEffects")}
+                        onCheckedChange={(checked) =>
+                          handlePreferenceChange("soundEffects", checked)
+                        }
+                      />
+                      {savingSettings.has("soundEffects") && (
+                        <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
@@ -821,16 +697,19 @@ export default function SettingsPage() {
                       </Label>
                       <p className="text-sm text-muted-foreground">Automatically save your work</p>
                     </div>
-                    <Switch
-                      id="autoSave"
-                      checked={settings.preferences.autoSave}
-                      onCheckedChange={(checked) =>
-                        setSettings({
-                          ...settings,
-                          preferences: { ...settings.preferences, autoSave: checked },
-                        })
-                      }
-                    />
+                    <div className="flex items-center">
+                      <Switch
+                        id="autoSave"
+                        checked={settings.preferences.autoSave}
+                        disabled={savingSettings.has("autoSave")}
+                        onCheckedChange={(checked) =>
+                          handlePreferenceChange("autoSave", checked)
+                        }
+                      />
+                      {savingSettings.has("autoSave") && (
+                        <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -888,16 +767,19 @@ export default function SettingsPage() {
                       <p className="text-sm text-muted-foreground">{description}</p>
                     </div>
                   </div>
-                  <Switch
-                    id={key}
-                    checked={settings.preferences[key as keyof typeof settings.preferences] as boolean}
-                    onCheckedChange={(checked) =>
-                      setSettings({
-                        ...settings,
-                        preferences: { ...settings.preferences, [key]: checked },
-                      })
-                    }
-                  />
+                  <div className="flex items-center">
+                    <Switch
+                      id={key}
+                      checked={settings.preferences[key as keyof typeof settings.preferences] as boolean}
+                      disabled={savingSettings.has(key)}
+                      onCheckedChange={(checked) =>
+                        handlePreferenceChange(key, checked)
+                      }
+                    />
+                    {savingSettings.has(key) && (
+                      <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                    )}
+                  </div>
                 </div>
               ))}
             </CardContent>
@@ -931,10 +813,7 @@ export default function SettingsPage() {
                           : "border-border"
                       }`}
                       onClick={() =>
-                        setSettings({
-                          ...settings,
-                          privacy: { ...settings.privacy, profileVisibility: value as any },
-                        })
+                        handlePrivacyChange("profileVisibility", value as any)
                       }
                     >
                       <h3 className="font-medium mb-1">{label}</h3>
@@ -980,10 +859,7 @@ export default function SettingsPage() {
                         id={key}
                         checked={settings.privacy[key as keyof typeof settings.privacy] as boolean}
                         onCheckedChange={(checked) =>
-                          setSettings({
-                            ...settings,
-                            privacy: { ...settings.privacy, [key]: checked },
-                          })
+                          handlePrivacyChange(key, checked)
                         }
                       />
                     </div>
@@ -1024,10 +900,7 @@ export default function SettingsPage() {
                         id={key}
                         checked={settings.privacy[key as keyof typeof settings.privacy] as boolean}
                         onCheckedChange={(checked) =>
-                          setSettings({
-                            ...settings,
-                            privacy: { ...settings.privacy, [key]: checked },
-                          })
+                          handlePrivacyChange(key, checked)
                         }
                       />
                     </div>
@@ -1155,10 +1028,7 @@ export default function SettingsPage() {
                       id="loginAlerts"
                       checked={settings.security.loginAlerts}
                       onCheckedChange={(checked) =>
-                        setSettings({
-                          ...settings,
-                          security: { ...settings.security, loginAlerts: checked },
-                        })
+                        handleSecurityChange("loginAlerts", checked)
                       }
                     />
                   </div>
@@ -1173,10 +1043,7 @@ export default function SettingsPage() {
                       id="deviceTrust"
                       checked={settings.security.deviceTrust}
                       onCheckedChange={(checked) =>
-                        setSettings({
-                          ...settings,
-                          security: { ...settings.security, deviceTrust: checked },
-                        })
+                        handleSecurityChange("deviceTrust", checked)
                       }
                     />
                   </div>

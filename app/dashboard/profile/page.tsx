@@ -211,6 +211,26 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     setIsLoading(true)
     try {
+      // Client-side validation
+      const trimmedName = profileData.name.trim()
+      if (trimmedName.length < 2) {
+        toast({
+          title: "Validation Error",
+          description: "Name must be at least 2 characters long",
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (trimmedName.length > 100) {
+        toast({
+          title: "Validation Error",
+          description: "Name cannot exceed 100 characters",
+          variant: "destructive",
+        })
+        return
+      }
+
       console.log("Saving profile data:", profileData)
 
       const result = await profileService.updateProfile(profileData)
@@ -453,6 +473,7 @@ export default function ProfilePage() {
                             value={profileData.name}
                             onChange={handleInputChange}
                             placeholder="Enter your full name"
+                            required
                           />
                         </div>
                         <div className="space-y-2">

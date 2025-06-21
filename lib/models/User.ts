@@ -21,6 +21,9 @@ export interface IUser extends mongoose.Document {
     dateFormat: string
     timeFormat: string
     theme: string
+    soundEffects: boolean
+    autoSave: boolean
+    compactMode: boolean
   }
   notifications?: {
     emailNotifications: boolean
@@ -39,6 +42,9 @@ export interface IUser extends mongoose.Document {
     allowDataCollection: boolean
     showEmail: boolean
     showPhone: boolean
+    showLocation: boolean
+    allowDirectMessages: boolean
+    allowMentions: boolean
   }
   security?: {
     twoFactorAuth: boolean
@@ -47,6 +53,7 @@ export interface IUser extends mongoose.Document {
     passwordLastChanged?: Date
     activeSessions: number
     lastSignOutAll?: Date
+    deviceTrust: boolean
   }
   comparePassword(candidatePassword: string): Promise<boolean>
   createdAt: Date
@@ -59,6 +66,8 @@ const userSchema = new mongoose.Schema<IUser>(
       type: String,
       required: true,
       trim: true,
+      minlength: [2, "Name must be at least 2 characters long"],
+      maxlength: [100, "Name cannot exceed 100 characters"],
     },
     email: {
       type: String,
@@ -133,6 +142,18 @@ const userSchema = new mongoose.Schema<IUser>(
         type: String,
         default: "system",
       },
+      soundEffects: {
+        type: Boolean,
+        default: true,
+      },
+      autoSave: {
+        type: Boolean,
+        default: true,
+      },
+      compactMode: {
+        type: Boolean,
+        default: false,
+      },
     },
     notifications: {
       emailNotifications: {
@@ -195,6 +216,18 @@ const userSchema = new mongoose.Schema<IUser>(
         type: Boolean,
         default: false,
       },
+      showLocation: {
+        type: Boolean,
+        default: false,
+      },
+      allowDirectMessages: {
+        type: Boolean,
+        default: true,
+      },
+      allowMentions: {
+        type: Boolean,
+        default: true,
+      },
     },
     security: {
       twoFactorAuth: {
@@ -218,6 +251,10 @@ const userSchema = new mongoose.Schema<IUser>(
       },
       lastSignOutAll: {
         type: Date,
+      },
+      deviceTrust: {
+        type: Boolean,
+        default: false,
       },
     },
   },

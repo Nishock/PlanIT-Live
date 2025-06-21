@@ -81,15 +81,18 @@ export const PUT = requireAuth(async (request: NextRequest, authUser) => {
     } = body
 
     // Validate input
-    if (name && (name.length < 2 || name.length > 100)) {
-      return NextResponse.json({ error: "Name must be between 2 and 100 characters" }, { status: 400 })
+    if (name !== undefined) {
+      const trimmedName = name.trim()
+      if (trimmedName.length < 2 || trimmedName.length > 100) {
+        return NextResponse.json({ error: "Name must be between 2 and 100 characters" }, { status: 400 })
+      }
     }
 
-    if (bio && bio.length > 500) {
+    if (bio !== undefined && bio.length > 500) {
       return NextResponse.json({ error: "Bio cannot exceed 500 characters" }, { status: 400 })
     }
 
-    if (skills && (!Array.isArray(skills) || skills.length > 20)) {
+    if (skills !== undefined && (!Array.isArray(skills) || skills.length > 20)) {
       return NextResponse.json({ error: "Skills must be an array with maximum 20 items" }, { status: 400 })
     }
 
