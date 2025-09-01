@@ -217,7 +217,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Built with [Next.js](https://nextjs.org/)
 - UI components from [Radix UI](https://www.radix-ui.com/)
 - Icons from [Lucide React](https://lucide.dev/)
-- AI powered by [OpenAI](https://openai.com/)
+- AI powered by [relevanceai](https://app.relevanceai.com/)
 
 ## 📞 Support
 
