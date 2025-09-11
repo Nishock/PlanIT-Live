@@ -227,7 +227,7 @@ function TasksManagementDialog({ project, onUpdate }: { project: Project; onUpda
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 border rounded-lg text-center">
+            <div className="p-4 border rounded-lg text-center ">
               <div className="text-2xl font-bold text-blue-600">{totalTasks}</div>
               <div className="text-sm text-muted-foreground">Total Tasks</div>
             </div>

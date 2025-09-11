@@ -38,6 +38,7 @@ import {
   BarChart3,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
+import { useSocket } from "@/lib/socket-context"
 import { tasksService, documentsService, workspacesService, projectsService } from "@/lib/api-service"
 import { useToast } from "@/hooks/use-toast"
 
@@ -52,11 +53,64 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [taskViewType, setTaskViewType] = useState("board")
   const { user } = useAuth()
+  const { socket, isConnected } = useSocket()
   const { toast } = useToast()
 
   useEffect(() => {
     loadDashboardData()
   }, [])
+
+  // Listen for Socket.IO events
+  useEffect(() => {
+    if (!socket || !isConnected) return
+
+    // Listen for task assignment events
+    socket.on("taskAssigned", (data: {
+      taskId: string
+      title: string
+      description?: string
+      dueDate?: string
+      priority: string
+    }) => {
+      console.log("New task assigned via Socket.IO:", data)
+      
+      // Add the new task to the tasks list
+      const newTask = {
+        id: data.taskId,
+        title: data.title,
+        description: data.description,
+        dueDate: data.dueDate,
+        priority: data.priority,
+        status: "todo",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        // Add other required fields with default values
+        assignee: null,
+        createdBy: user,
+        workspace: workspaces[0] || null,
+        project: null,
+        tags: [],
+        attachments: [],
+        comments: [],
+      }
+      
+      setTasks(prevTasks => [newTask, ...prevTasks])
+      
+      // Show toast notification
+      toast({
+        title: "New Task Assigned",
+        description: `You have a new task: ${data.title}`,
+        action: {
+          label: "View",
+          onClick: () => setActiveTab("tasks"),
+        },
+      })
+    })
+
+    return () => {
+      socket.off("taskAssigned")
+    }
+  }, [socket, isConnected, user, workspaces, toast])
 
   const loadDashboardData = async () => {
     try {

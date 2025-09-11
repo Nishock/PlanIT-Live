@@ -16,18 +16,24 @@ import {
   PenTool,
   X,
   Building,
+  Shield,
+  Bell,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/lib/auth-context"
+import { useSocket } from "@/lib/socket-context"
 
 interface NavItem {
   title: string
   href: string
   icon: React.ReactNode
   isActive?: boolean
+  badge?: React.ReactNode
+  showForRoles?: string[]
 }
 
 interface DashboardSidebarProps {
@@ -38,6 +44,7 @@ interface DashboardSidebarProps {
 export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarProps) {
   const pathname = usePathname()
   const { user } = useAuth()
+  const { newTaskCount, clearNewTaskCount } = useSocket()
 
   const mainNavItems: NavItem[] = [
     {
@@ -51,6 +58,11 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
       href: "/dashboard/tasks",
       icon: <FolderKanban className="h-5 w-5" />,
       isActive: pathname === "/dashboard/tasks",
+      badge: newTaskCount > 0 ? (
+        <Badge variant="destructive" className="ml-auto h-5 w-5 rounded-full p-0 text-xs">
+          {newTaskCount}
+        </Badge>
+      ) : undefined,
     },
     {
       title: "Documents",
@@ -95,6 +107,13 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
       isActive: pathname === "/dashboard/ai-assistant",
     },
     {
+      title: "Admin Dashboard",
+      href: "/dashboard/admin",
+      icon: <Shield className="h-5 w-5" />,
+      isActive: pathname === "/dashboard/admin",
+      showForRoles: ["admin", "manager"],
+    },
+    {
       title: "Profile",
       href: "/dashboard/profile",
       icon: <User className="h-5 w-5" />,
@@ -107,6 +126,16 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
       isActive: pathname === "/dashboard/settings",
     },
   ]
+
+  // Filter nav items based on user role
+  const filteredNavItems = mainNavItems.filter(item => {
+    if (!item.showForRoles) return true
+    return user && item.showForRoles.includes(user.role)
+  })
+
+  const handleTaskClick = () => {
+    clearNewTaskCount()
+  }
 
   return (
     <>
@@ -134,10 +163,11 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
                   Navigation
                 </h2>
                 <nav className="space-y-2">
-                  {mainNavItems.map((item) => (
+                  {filteredNavItems.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
+                      onClick={item.href === "/dashboard/tasks" ? handleTaskClick : undefined}
                       className={cn(
                         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300 cursor-magnetic",
                         item.href === "/dashboard"
@@ -151,6 +181,7 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
                     >
                       {item.icon}
                       {item.title}
+                      {item.badge}
                     </Link>
                   ))}
                 </nav>
@@ -218,11 +249,16 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
                   Navigation
                 </h2>
                 <nav className="space-y-2">
-                  {mainNavItems.map((item) => (
+                  {filteredNavItems.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
-                      onClick={onClose}
+                      onClick={() => {
+                        onClose?.()
+                        if (item.href === "/dashboard/tasks") {
+                          handleTaskClick()
+                        }
+                      }}
                       className={cn(
                         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300 cursor-magnetic",
                         item.href === "/dashboard"
@@ -236,6 +272,7 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
                     >
                       {item.icon}
                       {item.title}
+                      {item.badge}
                     </Link>
                   ))}
                 </nav>

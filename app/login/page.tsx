@@ -266,6 +266,14 @@ export default function CyberpunkLoginPage() {
                   ))}
                   <div className="absolute inset-0 bg-gradient-to-r from-cyan-600/0 via-cyan-600/30 to-cyan-600/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                 </button>
+
+                {/* Admin/Manager quick link */}
+                <div className="text-center text-sm text-gray-300">
+                  Are you an Admin/Manager?{" "}
+                  <Link href="/admin/login" className="text-cyan-400 hover:text-cyan-300 font-medium">
+                    Admin Login
+                  </Link>
+                </div>
               </form>
             </div>
 
@@ -366,6 +374,14 @@ export default function CyberpunkLoginPage() {
                   ))}
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 via-purple-600/30 to-purple-600/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                 </button>
+
+                {/* Admin/Manager quick link */}
+                <div className="text-center text-sm text-gray-300">
+                  Need Admin/Manager access?{" "}
+                  <Link href="/admin/signup" className="text-pink-400 hover:text-pink-300 font-medium">
+                    Request Admin Access
+                  </Link>
+                </div>
               </form>
             </div>
           </div>

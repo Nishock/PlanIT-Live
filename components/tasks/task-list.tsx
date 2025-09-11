@@ -133,30 +133,31 @@ export function TaskList() {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "High":
-        return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+        return "bg-red-500/10 text-red-700 dark:bg-red-400/20 dark:text-red-300";
       case "Medium":
-        return "bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
+        return "bg-yellow-500/10 text-yellow-700 dark:bg-yellow-400/20 dark:text-yellow-300";
       case "Low":
-        return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+        return "bg-green-500/10 text-green-700 dark:bg-green-400/20 dark:text-green-300";
       default:
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
+        return "bg-blue-500/10 text-blue-700 dark:bg-blue-400/20 dark:text-blue-300";
     }
-  }
-
+  };
+  
   const getStatusColor = (status: string) => {
     switch (status) {
       case "To Do":
-        return "bg-slate-100 text-slate-800 dark:bg-slate-900/20 dark:text-slate-400"
+        return "bg-gray-500/10 text-gray-700 dark:bg-gray-400/20 dark:text-gray-300";
       case "In Progress":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
+        return "bg-blue-500/10 text-blue-700 dark:bg-blue-400/20 dark:text-blue-300";
       case "Review":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400"
+        return "bg-purple-500/10 text-purple-700 dark:bg-purple-400/20 dark:text-purple-300";
       case "Done":
-        return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+        return "bg-green-500/10 text-green-700 dark:bg-green-400/20 dark:text-green-300";
       default:
-        return "bg-slate-100 text-slate-800 dark:bg-slate-900/20 dark:text-slate-400"
+        return "bg-gray-500/10 text-gray-700 dark:bg-gray-400/20 dark:text-gray-300";
     }
-  }
+  };
+  
 
   return (
     <div className="rounded-md border">

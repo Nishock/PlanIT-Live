@@ -4,10 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:socket": "node server.js",
     "build": "next build",
     "start": "next start",
+    "start:socket": "NODE_ENV=production node server.js",
     "lint": "next lint",
-    "analyze": "ANALYZE=true next build"
+    "analyze": "ANALYZE=true next build",
+    "seed:super-admin": "node scripts/seed-super-admin.js",
+    "reset:super-admin": "node scripts/reset-super-admin.js",
+    "fix:super-admin": "node scripts/fix-super-admin.js",
+    "seed:from-env": "node scripts/seed-super-admin-from-env.js"
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.50",

@@ -29,6 +29,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Account is deactivated. Please contact support." }, { status: 401 })
     }
 
+    // Check approval status for admin/manager roles
+    if ((user.role === "admin" || user.role === "manager") && !user.isApproved) {
+      return NextResponse.json({ 
+        error: "Your admin access request is pending approval. Please contact support." 
+      }, { status: 401 })
+    }
+
     // Compare password securely
     const isPasswordValid = await user.comparePassword(password)
     if (!isPasswordValid) {

@@ -6,15 +6,20 @@ export interface IUser extends mongoose.Document {
   email: string
   password: string
   avatar?: string
-  role: "owner" | "admin" | "manager" | "member" | "guest"
+  role: "super-admin" | "company-admin" | "owner" | "admin" | "manager" | "member" | "guest"
   jobTitle?: string
   department?: string
   phone?: string
   location?: string
   bio?: string
   isActive: boolean
+  isApproved: boolean
   emailVerified: boolean
   lastLogin?: Date
+  company?: string
+  adminRequestReason?: string
+  adminRequestDate?: Date
+  adminRequestStatus?: "pending" | "approved" | "rejected"
   preferences?: {
     language: string
     timezone: string
@@ -87,7 +92,7 @@ const userSchema = new mongoose.Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ["owner", "admin", "manager", "member", "guest"],
+      enum: ["super-admin", "company-admin", "owner", "admin", "manager", "member", "guest"],
       default: "member",
     },
     jobTitle: {
@@ -110,7 +115,15 @@ const userSchema = new mongoose.Schema<IUser>(
       type: String,
       default: "",
     },
+    company: {
+      type: String,
+      default: "",
+    },
     isActive: {
+      type: Boolean,
+      default: true,
+    },
+    isApproved: {
       type: Boolean,
       default: true,
     },
@@ -120,6 +133,18 @@ const userSchema = new mongoose.Schema<IUser>(
     },
     lastLogin: {
       type: Date,
+    },
+    adminRequestReason: {
+      type: String,
+      default: "",
+    },
+    adminRequestDate: {
+      type: Date,
+    },
+    adminRequestStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "approved",
     },
     preferences: {
       language: {

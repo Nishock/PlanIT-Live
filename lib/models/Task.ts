@@ -7,6 +7,7 @@ export interface ITask extends Document {
   priority: "low" | "medium" | "high" | "urgent"
   type: "epic" | "story" | "task" | "subtask"
   assignee?: mongoose.Types.ObjectId
+  assignedTo?: mongoose.Types.ObjectId // For admin assignment
   createdBy: mongoose.Types.ObjectId
   workspace: mongoose.Types.ObjectId
   project?: mongoose.Types.ObjectId
@@ -55,6 +56,10 @@ const TaskSchema = new Schema<ITask>(
       default: "task",
     },
     assignee: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    assignedTo: {
       type: Schema.Types.ObjectId,
       ref: "User",
     },
@@ -132,6 +137,7 @@ const TaskSchema = new Schema<ITask>(
 // Indexes
 TaskSchema.index({ workspace: 1, status: 1 })
 TaskSchema.index({ assignee: 1 })
+TaskSchema.index({ assignedTo: 1 })
 TaskSchema.index({ createdBy: 1 })
 TaskSchema.index({ project: 1 })
 TaskSchema.index({ dueDate: 1 })

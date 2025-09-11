@@ -19,7 +19,7 @@ export async function authenticate(request: NextRequest): Promise<JWTPayload | n
     const payload = verifyToken(token) as JWTPayload
     
     // Ensure userId is present for downstream usage
-    const userId = payload.id || payload.userId
+    const userId = (payload as any).id || (payload as any).userId
     if (!userId) {
       console.log("Auth middleware - No userId in payload")
       return null
@@ -34,15 +34,15 @@ export async function authenticate(request: NextRequest): Promise<JWTPayload | n
       return null
     }
 
-    return { ...payload, _id: user._id.toString(), userId: user._id.toString() }
+    return { ...(payload as any), _id: user._id.toString(), userId: user._id.toString() }
   } catch (error) {
     console.error("Auth middleware - Authentication error:", error)
     return null
   }
 }
 
-export function requireAuth(handler: (request: NextRequest, user: JWTPayload) => Promise<Response>) {
-  return async (request: NextRequest) => {
+export function requireAuth(handler: (request: NextRequest, user: JWTPayload, ...args: any[]) => Promise<Response>) {
+  return async (request: NextRequest, ...args: any[]) => {
     const user = await authenticate(request)
 
     if (!user) {
@@ -53,6 +53,35 @@ export function requireAuth(handler: (request: NextRequest, user: JWTPayload) =>
       })
     }
 
-    return handler(request, user)
+    return handler(request, user, ...args)
+  }
+}
+
+export function requireRole(allowedRoles: string[]) {
+  return (handler: (request: NextRequest, user: JWTPayload, ...args: any[]) => Promise<Response>) => {
+    return async (request: NextRequest, ...args: any[]) => {
+      const user = await authenticate(request)
+      if (!user) {
+        console.log("Role middleware - Unauthorized request to:", request.url)
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        })
+      }
+
+      // Get user with role information
+      await connectDB()
+      const userDoc = await User.findById((user as any).userId)
+      
+      if (!userDoc || !allowedRoles.includes(userDoc.role)) {
+        console.log("Role middleware - Insufficient permissions for:", request.url)
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        })
+      }
+
+      return handler(request, user, ...args)
+    }
   }
 }

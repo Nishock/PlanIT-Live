@@ -5,6 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from "@/lib/auth-context"
+import { SocketProvider } from "@/lib/socket-context"
 import { CursorEffects, CursorEffectsProvider } from "@/components/cursor-effects"
 import { CursorToggle } from "@/components/cursor-toggle"
 
@@ -26,12 +27,14 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>
-            <CursorEffectsProvider>
-              <CursorEffects trailCount={3} glowIntensity={0.8} />
-              <CursorToggle />
-              {children}
-              <Toaster />
-            </CursorEffectsProvider>
+            <SocketProvider>
+              <CursorEffectsProvider>
+                <CursorEffects trailCount={3} glowIntensity={0.8} />
+                <CursorToggle />
+                {children}
+                <Toaster />
+              </CursorEffectsProvider>
+            </SocketProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
